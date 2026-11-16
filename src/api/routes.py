@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import logging
 
 from fastapi import APIRouter
@@ -51,9 +52,16 @@ _CLASSIFICATION_TASK_TYPES = {
 }
 
 
+def _is_valid_client_key(client_key: str) -> bool:
+    """Validate clientKey using constant-time comparison when auth is configured or required."""
+    if not config.client_key:
+        return not config.require_client_key
+    return hmac.compare_digest(client_key, config.client_key)
+
+
 def _check_client_key(client_key: str) -> CreateTaskResponse | None:
     """Return an error response if the client key is invalid, else None."""
-    if config.client_key and client_key != config.client_key:
+    if not _is_valid_client_key(client_key):
         return CreateTaskResponse(
             errorId=1,
             errorCode="ERROR_KEY_DOES_NOT_EXIST",
@@ -121,7 +129,7 @@ async def create_task(request: CreateTaskRequest) -> CreateTaskResponse:
 async def get_task_result(
     request: GetTaskResultRequest,
 ) -> GetTaskResultResponse:
-    if config.client_key and request.clientKey != config.client_key:
+    if not _is_valid_client_key(request.clientKey):
         return GetTaskResultResponse(
             errorId=1,
             errorCode="ERROR_KEY_DOES_NOT_EXIST",
@@ -155,7 +163,7 @@ async def get_task_result(
 
 @router.post("/getBalance", response_model=GetBalanceResponse)
 async def get_balance(request: GetBalanceRequest) -> GetBalanceResponse:
-    if config.client_key and request.clientKey != config.client_key:
+    if not _is_valid_client_key(request.clientKey):
         return GetBalanceResponse(errorId=1, balance=0)
     return GetBalanceResponse(errorId=0, balance=99999.0)
 

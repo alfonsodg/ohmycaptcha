@@ -45,6 +45,8 @@ class Config:
     browser_headless: bool
     browser_timeout: int  # seconds
 
+    require_client_key: bool = False
+
     # ── Convenience aliases (backward-compat) ──
 
     @property
@@ -100,6 +102,8 @@ def load_config() -> Config:
         browser_headless=os.environ.get("BROWSER_HEADLESS", "true").strip().lower()
         in {"1", "true", "yes"},
         browser_timeout=int(os.environ.get("BROWSER_TIMEOUT", "30")),
+        require_client_key=os.environ.get("REQUIRE_CLIENT_KEY", "false").strip().lower()
+        in {"1", "true", "yes"},
     )
 
 
