@@ -7,6 +7,7 @@ import logging
 from fastapi import APIRouter
 
 from ..core.config import config
+from ..core.url_validation import validate_public_http_url
 from ..models.task import (
     CreateTaskRequest,
     CreateTaskResponse,
@@ -84,6 +85,13 @@ async def create_task(request: CreateTaskRequest) -> CreateTaskResponse:
                 errorId=1,
                 errorCode="ERROR_TASK_PROPERTY_EMPTY",
                 errorDescription="websiteURL and websiteKey are required",
+            )
+        url_error = validate_public_http_url(request.task.websiteURL)
+        if url_error:
+            return CreateTaskResponse(
+                errorId=1,
+                errorCode="ERROR_TASK_PROPERTY_INVALID",
+                errorDescription=url_error,
             )
 
     # Validate required fields for ImageToText tasks
